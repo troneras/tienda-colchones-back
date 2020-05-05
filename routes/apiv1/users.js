@@ -5,15 +5,15 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 
 
-const User = require('../models/User');
+const User = require('../../models/User');
 
 
 /**
- * @api {post} /login usuario
+ * @api {post} /users Registrar usuario
  */
-router.post('/', [
-    body('email').isEmail().withMessage('The email must be valid'),
-    body('password', 'Password needs to be min 7 characters long ')
+router.post('/register', [
+    body('email').isEmail().withMessage('El email debe ser válido'),
+    body('password', 'La clave debe ser de al menos 7 carácteres ')
         .isLength({ min: 7 })
 
 ], async (req, res, next) => {
@@ -21,14 +21,11 @@ router.post('/', [
 
     try {
         validationResult(req).throw();
-        const { email, password } = req.body
-
-        const user = await User.findByCredentials(email, password);
+        const user = new User(req.body)
+        await user.save()
         
-        if (!user) {
-          return res.send({success: false, error: 'Login failed!'})
-        }
         const token = await user.generateAuthToken()
+        const user2 = clean(user)
         
         res.json({ success: true, result: { user: clean(user), token : token } })
     } catch (err) {
