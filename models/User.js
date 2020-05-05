@@ -62,10 +62,10 @@ userSchema.methods.generateAuthToken = async function () {
 userSchema.methods.generateRecoveryToken = async function () {
     // Generate an auth token for the user
     const user = this
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_KEY)
-    user.recovery_token =  token 
+    user.recovery_token = jwt.sign({ _id: user._id }, process.env.JWT_KEY) 
     await user.save()
-    return token
+    
+    return user.recovery_token
 }
 
 userSchema.statics.findByCredentials = async (email, password) => {

@@ -7,6 +7,7 @@ const EmailCtrl = require('../../lib/mailCtrl');
 
 const User = require('../../models/User');
 
+const auth = require('../../middleware/auth')
 
 /**
  * @api {post} /users Registrar usuario
@@ -17,17 +18,17 @@ router.post('/', [
         .isLength({ min: 7 })
 
 ], async (req, res, next) => {
-    
+
 
     try {
         validationResult(req).throw();
         const user = new User(req.body)
         await user.save()
-        
+
         const token = await user.generateAuthToken()
         const user2 = clean(user)
-        
-        res.json({ success: true, result: { user: clean(user), token : token } })
+
+        res.json({ success: true, result: { user: clean(user), token: token } })
     } catch (err) {
         res.json(err)
     }
@@ -42,20 +43,20 @@ router.post('/login', [
         .isLength({ min: 7 })
 
 ], async (req, res, next) => {
-    
+
 
     try {
         validationResult(req).throw();
         const { email, password } = req.body
 
         const user = await User.findByCredentials(email, password);
-        
+
         if (!user) {
-          return res.send({success: false, error: 'Login failed!'})
+            return res.send({ success: false, error: 'Login failed!' })
         }
         const token = await user.generateAuthToken()
-        
-        return res.json({ success: true, result: { user: clean(user), token : token } })
+
+        return res.json({ success: true, result: { user: clean(user), token: token } })
     } catch (err) {
         return res.json(err)
     }
@@ -65,67 +66,96 @@ router.post('/login', [
  * @api {post} /resetpassword usuario
  */
 router.post('/passwordrecover', [
-  body('email').isEmail().withMessage('The email must be valid')
+    body('email').isEmail().withMessage('The email must be valid')
 
 ], async (req, res, next) => {
-  
 
-  try {
-      validationResult(req).throw();
-      const { email } = req.body
 
-      const user = await User.findOne({ email} ).exec();
-      
-      if (!user) {
-        return res.send({success: false, error: 'Email is invalid!'})
-      }
+    try {
+        validationResult(req).throw();
+        const { email } = req.body
 
-      const recovery_token = await user.generateRecoveryToken()
-      EmailCtrl.sendEmail(email, recovery_token);
-      
-      return res.json({ success: true })
-  } catch (err) {
-      return res.json(new Error(err))
-  }
+        const user = await User.findOne({ email }).exec();
+
+        if (!user) {
+            return res.send({ success: false, error: 'Email is invalid!' })
+        }
+
+        const recovery_token = await user.generateRecoveryToken()
+        EmailCtrl.sendEmail(email, recovery_token);
+
+        return res.json({ success: true })
+    } catch (err) {
+        return res.json(new Error(err))
+    }
 });
 
 /**
  * @api {post} /resetpassword usuario
  */
 router.post('/resetpassword', [
-  body('password', 'La clave debe ser de al menos 7 carácteres ')
+    body('password', 'La clave debe ser de al menos 7 carácteres ')
         .isLength({ min: 7 })
 
 ], async (req, res, next) => {
-  
 
-  try {
-      validationResult(req).throw();
-      const { email } = req.body
 
-      const user = await User.findOne({ email} ).exec();
-      
-      if (!user) {
-        return res.send({success: false, error: 'Email is invalid!'})
-      }
+    try {
+        validationResult(req).throw();
+        const { email } = req.body
 
-      const token = await user.generateAuthToken()
-      
-      return res.json({ success: true, result: { user: clean(user), token : token } })
-  } catch (err) {
-      return res.json(new Error(err))
-  }
+        const user = await User.findOne({ email }).exec();
+
+        if (!user) {
+            return res.send({ success: false, error: 'Email is invalid!' })
+        }
+
+        const token = await user.generateAuthToken()
+
+        return res.json({ success: true, result: { user: clean(user), token: token } })
+    } catch (err) {
+        return res.json(new Error(err))
+    }
 });
 
+router.get('/me', auth, async (req, res) => {
+    // View logged in user profile
+    res.send(req.user)
+})
 
-function clean(user){   
+router.post('/users/me/logout', auth, async (req, res) => {
+    // Log user out of the application
+    try {
+        req.user.tokens = req.user.tokens.filter((token) => {
+            return token.token != req.token
+        })
+        await req.user.save()
+        res.send()
+    } catch (error) {
+        res.status(500).send(error)
+    }
+})
+
+router.post('/users/me/logoutall', auth, async (req, res) => {
+    // Log user out of all devices
+    try {
+        req.user.tokens.splice(0, req.user.tokens.length)
+        await req.user.save()
+        res.send()
+    } catch (error) {
+        res.status(500).send(error)
+    }
+})
+
+
+function clean(user) {
     var cleaned = user.toObject(); // convertir a objeto js normal
 
     delete cleaned.password;
     delete cleaned.__v;
     delete cleaned.tokens;
     delete cleaned.recovery_token;
-    
+
     return cleaned;
 }
 
