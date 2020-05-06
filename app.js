@@ -18,7 +18,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 app.use('/apiv1/users', require('./routes/apiv1/users'));
-
+app.use('/apiv1/colchones', require('./routes/apiv1/colchones'));
+app.use('/apiv1/somieres', require('./routes/apiv1/somieres'));
 
 app.use((err, req, res, next) => {
   if (err.array) { // validation error

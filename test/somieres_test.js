@@ -5,24 +5,24 @@ chai.use(require('chai-like'));
 chai.use(require('chai-things')); // Don't swap these two
 
 const app = require('../app')
-const Colchon = require('../models/Colchon');
+const Somier = require('../models/Somier');
 const faker = require('faker')
 
 
 
-describe("apiv1/colchones", () => {
+describe("apiv1/somieres", () => {
     beforeEach(async () => {
-        await Colchon.deleteMany({})
+        await Somier.deleteMany({})
     });
 
     // get all
     describe("GET /", () => {
         
-        it("should return all colchones", async() => {
+        it("should return all somieres", async() => {
 
-            let colchones = []
+            let somieres = []
             for (let i = 0; i < 10; i++) {
-                colchones.push({
+                somieres.push({
                     name: faker.lorem.words(3),
                     description: faker.commerce.productName(),
                     price: faker.commerce.price(100,500),
@@ -31,10 +31,10 @@ describe("apiv1/colchones", () => {
                 
             }
 
-            await Colchon.insertMany(colchones)     
+            await Somier.insertMany(somieres)     
             
 
-            const res = await request(app).get("/apiv1/colchones");
+            const res = await request(app).get("/apiv1/somieres");
             
             expect(res.status).to.equal(200)
             expect(res.body).to.be.an('array')
@@ -45,11 +45,11 @@ describe("apiv1/colchones", () => {
     // pagination
     describe("GET /:limit :skip ", () => {
         
-        it("should return paginated colchones", async() => {
+        it("should return paginated somieres", async() => {
 
-            let colchones = []
+            let somieres = []
             for (let i = 0; i < 10; i++) {
-                colchones.push({
+                somieres.push({
                     name: faker.lorem.words(3),
                     description: faker.commerce.productName(),
                     price: faker.commerce.price(100,500),
@@ -58,11 +58,11 @@ describe("apiv1/colchones", () => {
                 
             }
 
-            await Colchon.insertMany(colchones)     
+            await Somier.insertMany(somieres)     
             
             const perPage = 3,
                   page = 3
-            const res = await request(app).get("/apiv1/colchones").query({ limit: perPage, skip: perPage*page });
+            const res = await request(app).get("/apiv1/somieres").query({ limit: perPage, skip: perPage*page });
             
             expect(res.status).to.equal(200)
             expect(res.body).to.be.an('array').that.has.lengthOf(1) // la última página solo tiene 1 
@@ -74,10 +74,10 @@ describe("apiv1/colchones", () => {
 
         
         
-        it("should update the existing colchon and return 200", async() => {
-            let colchones = []
+        it("should update the existing Somier and return 200", async() => {
+            let somieres = []
             for (let i = 0; i < 10; i++) {
-                colchones.push({
+                somieres.push({
                     name: faker.lorem.words(3),
                     description: faker.commerce.productName(),
                     price: faker.commerce.price(100,500),
@@ -86,7 +86,7 @@ describe("apiv1/colchones", () => {
                 
             }
 
-            const inserted = await Colchon.insertMany(colchones)  
+            const inserted = await Somier.insertMany(somieres)  
                  
            const login = await request(app).post("/apiv1/users").send({
                 email: faker.internet.email(),
@@ -97,12 +97,12 @@ describe("apiv1/colchones", () => {
             
             
             let nuevoNombre = "NUEVO NOMBRE" 
-            const res = await request(app).put("/apiv1/colchones/" + inserted[0]._id).send({
+            const res = await request(app).put("/apiv1/somieres/" + inserted[0]._id).send({
                 name: nuevoNombre
             }).set('Authorization', 'Bearer ' + token);
             
             expect(res.status).to.equal(200)
-            expect(res.body).to.have.property("colchon").to.have.property("name",nuevoNombre)
+            expect(res.body).to.have.property("somier").to.have.property("name",nuevoNombre)
         })
     });
 
