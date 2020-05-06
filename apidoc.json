@@ -1,0 +1,9 @@
+{
+    "name": "Colchones",
+    "version": "1.0.0",
+    "description": "apiDoc basic example",
+    "apidoc": {
+      "title": "API colchones",
+      "url" : "https://github.com/troneras/tienda-colchones-back"
+    }
+  }

@@ -1,0 +1,11 @@
+apidoc: {
+    colchones: {
+      src: "./",
+      dest: "apidoc/",
+      options: {
+        debug: true,
+        includeFilters: [ ".*\\.js$" ],
+        excludeFilters: [ "node_modules/" ]
+      }
+    }
+  }

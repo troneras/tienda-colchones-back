@@ -6,6 +6,7 @@ chai.use(require('chai-things')); // Don't swap these two
 
 const app = require('../app')
 const Colchon = require('../models/Colchon');
+
 const faker = require('faker')
 
 

@@ -10,8 +10,20 @@ const User = require('../../models/User');
 
 const auth = require('../../middleware/auth')
 
+
+
 /**
- * @api {post} /users Registrar usuario
+ * @api {post} /usuarios Registrar usuario
+ * @apiDescription Permite registrar un usuario
+ * 
+ * @apiName RegistrarUsuario
+ * @apiGroup Usuario
+ * @apiVersion 1.0.0
+ * 
+ * @apiParam  {String} email        
+ * @apiParam  {String} password     Al menos 7 caracteres
+ * 
+ * @apiSuccess {object} colchon- El colchon actualizado
  */
 router.post('/', [
     body('email').isEmail().withMessage('El email debe ser válido'),
@@ -36,7 +48,18 @@ router.post('/', [
 });
 
 /**
- * @api {post} /login usuario
+ * @api {post} /usuarios/login Login de usuario
+ * @apiDescription Permite hacer login de un usuario y obtener el token de autentificación
+ * 
+ * @apiName LoginUsuario
+ * @apiGroup Usuario
+ * @apiVersion 1.0.0
+ * 
+ * @apiParam  {String} email        
+ * @apiParam  {String} password     Al menos 7 caracteres
+ * 
+ * @apiSuccess {object} user    El usuario
+ * @apiSuccess {string} token   El token de Authentication
  */
 router.post('/login', [
     body('email').isEmail().withMessage('The email must be valid'),
@@ -62,9 +85,19 @@ router.post('/login', [
 });
 
 /**
- * @api {post} /resetpassword usuario
+ * @api {post} /usuarios/password-recovery Password Recovery
+ * @apiDescription Permite al usuario recuperar su password. Se enviará un email a su dirección
+ * Genera un token que guarda en el usuario de la bbdd para después comprobar si puede resetear la contraseña
+ * 
+ * @apiName PasswordRecoveryUsuario
+ * @apiGroup Usuario
+ * @apiVersion 1.0.0
+ * 
+ * @apiParam  {String} email        
+ * 
+ * @apiSuccess {boolean} success    
  */
-router.post('/passwordrecover', [
+router.post('/password-recovery', [
     body('email').isEmail().withMessage('The email must be valid')
 
 ], async (req, res, next) => {
@@ -90,9 +123,21 @@ router.post('/passwordrecover', [
 });
 
 /**
- * @api {post} /resetpassword usuario
+ * @api {post} /usuarios/reset-password Reset Password
+ * @apiDescription Permite al usuario resetear su password. Debe incluír la nueva contraseña 
+ * además del token recibido por email 
+ * 
+ * @apiName ResetPasswordUsuario
+ * @apiGroup Usuario
+ * @apiVersion 1.0.0
+ * 
+ * @apiParam  {String} email        
+ * @apiParam  {String} password     El nuevo password        
+ * 
+ * @apiSuccess {boolean} success    
  */
-router.post('/resetpassword', [
+router.post('/reset-password', [
+    body('email').isEmail().withMessage('The email must be valid'),
     body('password', 'La clave debe ser de al menos 7 carácteres ')
         .isLength({ min: 7 })
 
@@ -117,12 +162,45 @@ router.post('/resetpassword', [
     }
 });
 
+/**
+ * @api {get} /usuarios/me  Logged User
+ * @apiDescription Permite al usuario recuperar su información. Es necesario estar logueado 
+ * 
+ * @apiName GetUsuario
+ * @apiGroup Usuario
+ * @apiVersion 1.0.0
+ * 
+ * @apiHeader {String} Authorization Token jwt del usuario 
+ * @apiHeaderExample {json} Authorization:
+ *     {
+ *       "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNWEzMTliYzE2ZDY3YmNkNTMwZDYxM2RkIiwiaWF0IjoxNTEzMjA1MjY2LCJleHAiOjE1MTMzNzgwNjZ9.EnA-ng5V_v5wmKk44zDKWTcdxhUP4FxONYNVbQnHWVY"
+ *     }
+ * 
+ * @apiSuccess {Object} user    Información del usuario logueado    
+*/
 router.get('/me', auth, async (req, res) => {
     // View logged in user profile
-    res.send({ success: true, result: { user: clean(req.user) } })
+    res.send( { user: clean(req.user) })
 })
 
-router.post('/users/me/logout', auth, async (req, res) => {
+
+/**
+ * @api {post} /usuarios/logout
+ * @apiDescription Permite al usuario desconectar del dispositivo actual
+ * 
+ * @apiName LogoutUsuario
+ * @apiGroup Usuario
+ * @apiVersion 1.0.0
+ * 
+ * @apiHeader {String} Authorization Token jwt del usuario 
+ * @apiHeaderExample {json} Authorization:
+ *     {
+ *       "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNWEzMTliYzE2ZDY3YmNkNTMwZDYxM2RkIiwiaWF0IjoxNTEzMjA1MjY2LCJleHAiOjE1MTMzNzgwNjZ9.EnA-ng5V_v5wmKk44zDKWTcdxhUP4FxONYNVbQnHWVY"
+ *     }
+ * 
+ * @apiSuccess {Boolean} success      
+*/
+router.post('/users/logout', auth, async (req, res) => {
     // Log user out of the application
     try {
         req.user.tokens = req.user.tokens.filter((token) => {
@@ -135,7 +213,23 @@ router.post('/users/me/logout', auth, async (req, res) => {
     }
 })
 
-router.post('/users/me/logoutall', auth, async (req, res) => {
+/**
+ * @api {post} /usuarios/logout-all
+ * @apiDescription Permite al usuario desconectar de todos los dispositivos en los que haya iniciado sesión
+ * 
+ * @apiName LogoutAllUsuario
+ * @apiGroup Usuario
+ * @apiVersion 1.0.0
+ * 
+ * @apiHeader {String} Authorization Token jwt del usuario 
+ * @apiHeaderExample {json} Authorization:
+ *     {
+ *       "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNWEzMTliYzE2ZDY3YmNkNTMwZDYxM2RkIiwiaWF0IjoxNTEzMjA1MjY2LCJleHAiOjE1MTMzNzgwNjZ9.EnA-ng5V_v5wmKk44zDKWTcdxhUP4FxONYNVbQnHWVY"
+ *     }
+ * 
+ * @apiSuccess {Boolean} success      
+*/
+router.post('/users/logout-all', auth, async (req, res) => {
     // Log user out of all devices
     try {
         req.user.tokens.splice(0, req.user.tokens.length)
