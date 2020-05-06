@@ -4,7 +4,6 @@ const app = require('../app')
 const User = require('../models/User');
 const faker = require('faker')
 
-let user 
 let email = faker.internet.email()
 let password  =faker.internet.password(8)
 
