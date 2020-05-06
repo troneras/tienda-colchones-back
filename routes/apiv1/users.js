@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const EmailCtrl = require('../../lib/mailCtrl');
+const { ErrorHandler } = require('../../lib/error')
 
 const User = require('../../models/User');
 
@@ -28,7 +29,7 @@ router.post('/', [
         const token = await user.generateAuthToken()
         const user2 = clean(user)
 
-        res.json({ success: true, result: { user: clean(user), token: token } })
+        res.json({ user: clean(user), token: token })
     } catch (err) {
         res.json(err)
     }
@@ -47,18 +48,16 @@ router.post('/login', [
 
     try {
         validationResult(req).throw();
+
         const { email, password } = req.body
-
         const user = await User.findByCredentials(email, password);
-
-        if (!user) {
-            return res.send({ success: false, error: 'Login failed!' })
-        }
         const token = await user.generateAuthToken()
 
-        return res.json({ success: true, result: { user: clean(user), token: token } })
-    } catch (err) {
-        return res.json(err)
+        return res.json({user: clean(user), token: token  })
+
+    } catch (err) {       
+        
+        next(err);
     }
 });
 
@@ -78,7 +77,7 @@ router.post('/passwordrecover', [
         const user = await User.findOne({ email }).exec();
 
         if (!user) {
-            return res.send({ success: false, error: 'Email is invalid!' })
+            throw new ErrorHandler(404, 'No user found with this email' )
         }
 
         const recovery_token = await user.generateRecoveryToken()
@@ -86,7 +85,7 @@ router.post('/passwordrecover', [
 
         return res.json({ success: true })
     } catch (err) {
-        return res.json(new Error(err))
+        next(err)
     }
 });
 
@@ -107,20 +106,20 @@ router.post('/resetpassword', [
         const user = await User.findOne({ email }).exec();
 
         if (!user) {
-            return res.send({ success: false, error: 'Email is invalid!' })
+            throw new ErrorHandler(404, 'No user found with this email' )
         }
 
         const token = await user.generateAuthToken()
 
-        return res.json({ success: true, result: { user: clean(user), token: token } })
+        return res.json({ user: clean(user), token: token  })
     } catch (err) {
-        return res.json(new Error(err))
+        next(err)
     }
 });
 
 router.get('/me', auth, async (req, res) => {
     // View logged in user profile
-    res.send(req.user)
+    res.send({ success: true, result: { user: clean(req.user) } })
 })
 
 router.post('/users/me/logout', auth, async (req, res) => {
@@ -130,9 +129,9 @@ router.post('/users/me/logout', auth, async (req, res) => {
             return token.token != req.token
         })
         await req.user.save()
-        res.send()
+        res.send({ success: true })
     } catch (error) {
-        res.status(500).send(error)
+        next(err)
     }
 })
 
@@ -141,9 +140,9 @@ router.post('/users/me/logoutall', auth, async (req, res) => {
     try {
         req.user.tokens.splice(0, req.user.tokens.length)
         await req.user.save()
-        res.send()
+        res.send({ success: true })
     } catch (error) {
-        res.status(500).send(error)
+        next(err)
     }
 })
 
